@@ -122,6 +122,7 @@ class ItopInventory(object):
         print(json.dumps(inventory, indent=2))
 
 ### Revoir def find_str_dict
+### Revoir le null dans les metavars
 
 if __name__ == '__main__':
     ItopInventory("config.ini").AnsibleInventory()
