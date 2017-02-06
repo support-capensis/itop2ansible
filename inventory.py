@@ -45,8 +45,8 @@ class ItopInventory(object):
         itopclass = self.config.sections()
         return itopclass
 
-    def ansible_inventory(self, host, inventory):
-        if inventory == None:
+    def ansible_add_inventory(self, host, inventory):
+        if inventory is None:
             inventory = {"hosts": [], "vars": {}, "_meta": {"hostvars": {}}}
             inventory["hosts"].append(host)
         else:
@@ -69,12 +69,12 @@ class ItopInventory(object):
             inventory["_meta"]["hostvars"][host][metavars] = "True"
         return inventory
 
-    def ifstrindata(self, str, data):
+    def if_str_in_data(self, str, data):
         if str in data:
             return data[str]
 
     def find_str_dict(self, fstr, data):
-        findlist = []
+        find_list = []
         for key in data:
             """ Why that shit !!!!
                 if isinstance(data[key], dict):
@@ -84,32 +84,32 @@ class ItopInventory(object):
                 self.find_str_dict(fstr, devicedict)"""
             if isinstance(data[key], list):
                 for i in data[key]:
-                    findlist.append(self.ifstrindata(fstr, i))
+                    find_list.append(self.if_str_in_data(fstr, i))
                     # print("la2")
                     if isinstance(i, dict):
                         # print("la3")
                         self.find_str_dict(fstr, i)
-        return findlist
+        return find_list
 
-    def searchitopelem(self, httpreq):
+    def search_itop_elem(self, http_req):
         elem = []
-        for i in httpreq:
+        for i in http_req:
             if i == "objects":
-                for a in httpreq[i]:
-                    elem.append(httpreq[i][a]['fields'])
+                for a in http_req[i]:
+                    elem.append(http_req[i][a]['fields'])
         return elem
 
-    def ansibleinventory(self):
+    def ansible_inventory(self):
         inventory = None
         pattern = re.compile("^class::[a-zA-Z]{1,}$")
         for v in self.get_itop_classes():
             if pattern.match(v):
                 config_class = v.split('::')
                 http_return = self.send_request(v, config_class)
-                data_elem = self.searchitopelem(http_return)
+                data_elem = self.search_itop_elem(http_return)
                 for srv in data_elem:
                     host = srv.get("name").replace(" ", "_")
-                    inventory = self.ansible_inventory(host, inventory)
+                    inventory = self.ansible_add_inventory(host, inventory)
                     inventory = self.ansible_group(host, srv.get("organization_name"), inventory)
                     roles_mapping = self.config.get(v, "roles_mapping").replace(" ", "").split(",")
                     for roles in roles_mapping:
@@ -126,4 +126,4 @@ class ItopInventory(object):
 ### Revoir le null dans les metavars
 
 if __name__ == '__main__':
-    ItopInventory("config.ini").ansibleinventory()
+    ItopInventory("config.ini").ansible_inventory()
