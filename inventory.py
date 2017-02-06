@@ -1,9 +1,9 @@
-# /usr/bin/python3.4
 # coding: utf8
-import requests
 import configparser
-import re
 import json
+import re
+
+import requests
 
 
 class ItopInventory(object):
@@ -18,34 +18,35 @@ class ItopInventory(object):
         self.pattern = re.compile("^[a-zA-Z]+::[0-9]+$")
         self.url = self.config.get("itop", "url")
         self.user = self.config.get("itop", "user")
-        self.passwd = self.config.get("itop", "passwd")
+        self.api_pass = self.config.get("itop", "passwd")
 
-    def send_request(self, reqclass, defclass, sslverify=False):
-        self.filter = self.config.get(reqclass, "filter")
-        self.group_filter = self.config.get(reqclass, "group_filter").split(",")
-        self.req = "{\"operation\":\"core/get\",\"" + defclass[0] + "\":\"" + defclass[1] + "\",\"key\":\"SELECT " + \
-                   defclass[1] + "\",\"output_fields\":\"*\"}"
-        self.params = {"version": self.config.get("itop", "version"), "json_data": self.req}
+    def send_request(self, reqclass, def_class, sslverify=False):
+        group_filter = self.config.get(reqclass, "group_filter").split(",")
+        filter = self.config.get(reqclass, "filter")
+        req = "{\"operation\":\"core/get\",\"" + def_class[0] + "\":\"" + def_class[1] + "\",\"key\":\"SELECT " + \
+              def_class[1] + "\",\"output_fields\":\"*\"}"
+        params = {"version": self.config.get("itop", "version"), "json_data": req}
 
-        if self.filter:
-            self.params["json_data"] = (self.params["json_data"].replace("*", self.filter))
+        if filter:
+            params["json_data"] = (params["json_data"].replace("*", filter))
 
         if not sslverify:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         try:
-            r = requests.post(self.url, auth=(self.user, self.passwd), params=self.params, verify=False)
-            response = r.json()
+            itop_api_request = requests.post(self.url, auth=(self.user, self.api_pass), params=params, verify=False)
+            response = itop_api_request.json()
             return response
         except requests.exceptions.ConnectionError:
             print("HTTP error unable to connect to Itop API")
 
     def get_itop_classes(self):
-        itopclass = self.config.sections()
-        return itopclass
+        itop_class = self.config.sections()
+        return itop_class
 
-    def ansible_add_inventory(self, host, inventory):
+    @staticmethod
+    def ansible_add_inventory(host, inventory):
         if inventory is None:
             inventory = {"hosts": [], "vars": {}, "_meta": {"hostvars": {}}}
             inventory["hosts"].append(host)
@@ -53,7 +54,8 @@ class ItopInventory(object):
             inventory["hosts"].append(host)
         return inventory
 
-    def ansible_group(self, host, group, inventory):
+    @staticmethod
+    def ansible_group(host, group, inventory):
         if group not in inventory:
             inventory[group] = []
             inventory[group].append(host)
@@ -61,37 +63,32 @@ class ItopInventory(object):
             inventory[group].append(host)
         return inventory
 
-    def ansible_metavars(self, host, inventory, metavars):
+    @staticmethod
+    def ansible_meta_vars(host, inventory, meta_vars):
         if host not in inventory["_meta"]["hostvars"]:
             inventory["_meta"]["hostvars"][host] = {}
-            inventory["_meta"]["hostvars"][host][metavars] = "True"
+            inventory["_meta"]["hostvars"][host][meta_vars] = "True"
         else:
-            inventory["_meta"]["hostvars"][host][metavars] = "True"
+            inventory["_meta"]["hostvars"][host][meta_vars] = "True"
         return inventory
 
-    def if_str_in_data(self, str, data):
+    @staticmethod
+    def if_str_in_data(str, data):
         if str in data:
             return data[str]
 
     def find_str_dict(self, fstr, data):
         find_list = []
         for key in data:
-            """ Why that shit !!!!
-                if isinstance(data[key], dict):
-                findlist.append(self.ifstrindata(fstr, data[key]))
-                devicedict = data[key]
-                print("la1")
-                self.find_str_dict(fstr, devicedict)"""
             if isinstance(data[key], list):
                 for i in data[key]:
                     find_list.append(self.if_str_in_data(fstr, i))
-                    # print("la2")
                     if isinstance(i, dict):
-                        # print("la3")
                         self.find_str_dict(fstr, i)
         return find_list
 
-    def search_itop_elem(self, http_req):
+    @staticmethod
+    def search_itop_elem(http_req):
         elem = []
         for i in http_req:
             if i == "objects":
@@ -116,14 +113,10 @@ class ItopInventory(object):
                         if roles not in srv:
                             list_mapping = self.find_str_dict(roles, srv)
                             for meta_vars in list_mapping:
-                                inventory = self.ansible_metavars(host, inventory, meta_vars)
+                                inventory = self.ansible_meta_vars(host, inventory, meta_vars)
                         else:
-                            inventory = self.ansible_metavars(host, inventory, srv.get("roles"))
+                            inventory = self.ansible_meta_vars(host, inventory, srv.get("roles"))
         print(json.dumps(inventory, indent=2))
-
-
-### Revoir def find_str_dict
-### Revoir le null dans les metavars
 
 if __name__ == '__main__':
     ItopInventory("config.ini").ansible_inventory()
