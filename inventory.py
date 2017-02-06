@@ -1,9 +1,10 @@
-#/usr/bin/python3.4
+# /usr/bin/python3.4
 # coding: utf8
 import requests
 import configparser
 import re
 import json
+
 
 class ItopInventory(object):
     def __init__(self, configfile):
@@ -25,7 +26,6 @@ class ItopInventory(object):
         self.req = "{\"operation\":\"core/get\",\"" + defclass[0] + "\":\"" + defclass[1] + "\",\"key\":\"SELECT " + \
                    defclass[1] + "\",\"output_fields\":\"*\"}"
         self.params = {"version": self.config.get("itop", "version"), "json_data": self.req}
-
 
         if self.filter:
             self.params["json_data"] = (self.params["json_data"].replace("*", self.filter))
@@ -69,14 +69,15 @@ class ItopInventory(object):
             inventory["_meta"]["hostvars"][host][metavars] = "True"
         return inventory
 
-    def ifstrindata(self,str, data):
+    def ifstrindata(self, str, data):
         if str in data:
             return data[str]
 
     def find_str_dict(self, fstr, data):
         findlist = []
         for key in data:
-            """if isinstance(data[key], dict):
+            """ Why that shit !!!!
+                if isinstance(data[key], dict):
                 findlist.append(self.ifstrindata(fstr, data[key]))
                 devicedict = data[key]
                 print("la1")
@@ -84,9 +85,9 @@ class ItopInventory(object):
             if isinstance(data[key], list):
                 for i in data[key]:
                     findlist.append(self.ifstrindata(fstr, i))
-                    #print("la2")
+                    # print("la2")
                     if isinstance(i, dict):
-                        #print("la3")
+                        # print("la3")
                         self.find_str_dict(fstr, i)
         return findlist
 
@@ -98,31 +99,31 @@ class ItopInventory(object):
                     elem.append(httpreq[i][a]['fields'])
         return elem
 
-
-    def AnsibleInventory(self):
+    def ansibleinventory(self):
         inventory = None
         pattern = re.compile("^class::[a-zA-Z]{1,}$")
         for v in self.get_itop_classes():
             if pattern.match(v):
-                configclass = v.split('::')
-                httpret = self.send_request(v, configclass)
-                dataelem = self.searchitopelem(httpret)
-                for srv in dataelem:
+                config_class = v.split('::')
+                http_return = self.send_request(v, config_class)
+                data_elem = self.searchitopelem(http_return)
+                for srv in data_elem:
                     host = srv.get("name").replace(" ", "_")
                     inventory = self.ansible_inventory(host, inventory)
                     inventory = self.ansible_group(host, srv.get("organization_name"), inventory)
-                    rolesmapping = self.config.get(v, "roles_mapping").replace(" ", "").split(",")
-                    for roles in rolesmapping:
+                    roles_mapping = self.config.get(v, "roles_mapping").replace(" ", "").split(",")
+                    for roles in roles_mapping:
                         if roles not in srv:
-                            varmapping = self.find_str_dict(roles, srv)
-                            for metavars in varmapping:
-                                inventory = self.ansible_metavars(host, inventory, metavars)
+                            list_mapping = self.find_str_dict(roles, srv)
+                            for meta_vars in list_mapping:
+                                inventory = self.ansible_metavars(host, inventory, meta_vars)
                         else:
                             inventory = self.ansible_metavars(host, inventory, srv.get("roles"))
         print(json.dumps(inventory, indent=2))
+
 
 ### Revoir def find_str_dict
 ### Revoir le null dans les metavars
 
 if __name__ == '__main__':
-    ItopInventory("config.ini").AnsibleInventory()
+    ItopInventory("config.ini").ansibleinventory()
