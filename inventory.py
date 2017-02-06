@@ -1,11 +1,9 @@
 #/usr/bin/python3.4
 # coding: utf8
 import requests
-import json
 import configparser
 import re
 import json
-import argparse
 
 class ItopInventory(object):
     def __init__(self, configfile):
@@ -47,6 +45,30 @@ class ItopInventory(object):
         itopclass = self.config.sections()
         return itopclass
 
+    def ansible_inventory(self, host, inventory):
+        if inventory == None:
+            inventory = {"hosts": [], "vars": {}, "_meta": {"hostvars": {}}}
+            inventory["hosts"].append(host)
+        else:
+            inventory["hosts"].append(host)
+        return inventory
+
+    def ansible_group(self, host, group, inventory):
+        if group not in inventory:
+            inventory[group] = []
+            inventory[group].append(host)
+        else:
+            inventory[group].append(host)
+        return inventory
+
+    def ansible_metavars(self, host, inventory, metavars):
+        if host not in inventory["_meta"]["hostvars"]:
+            inventory["_meta"]["hostvars"][host] = {}
+            inventory["_meta"]["hostvars"][host][metavars] = "True"
+        else:
+            inventory["_meta"]["hostvars"][host][metavars] = "True"
+        return inventory
+
     def ifstrindata(self,str, data):
         if str in data:
             return data[str]
@@ -54,14 +76,17 @@ class ItopInventory(object):
     def find_str_dict(self, fstr, data):
         findlist = []
         for key in data:
-            if isinstance(data[key], dict):
+            """if isinstance(data[key], dict):
                 findlist.append(self.ifstrindata(fstr, data[key]))
                 devicedict = data[key]
-                self.find_str_dict(fstr, devicedict)
-            elif isinstance(data[key], list):
+                print("la1")
+                self.find_str_dict(fstr, devicedict)"""
+            if isinstance(data[key], list):
                 for i in data[key]:
                     findlist.append(self.ifstrindata(fstr, i))
+                    #print("la2")
                     if isinstance(i, dict):
+                        #print("la3")
                         self.find_str_dict(fstr, i)
         return findlist
 
@@ -74,7 +99,8 @@ class ItopInventory(object):
         return elem
 
 
-    def run(self):
+    def AnsibleInventory(self):
+        inventory = None
         pattern = re.compile("^class::[a-zA-Z]{1,}$")
         for v in self.get_itop_classes():
             if pattern.match(v):
@@ -82,11 +108,20 @@ class ItopInventory(object):
                 httpret = self.send_request(v, configclass)
                 dataelem = self.searchitopelem(httpret)
                 for srv in dataelem:
-                    print(srv)
-                    print(srv.get("name"))
-                    print(srv.get("organization_name"))
-                    if self.config.get(v, "test") not in srv:
-                        print(self.find_str_dict(self.config.get(v, "test"), srv))
+                    host = srv.get("name").replace(" ", "_")
+                    inventory = self.ansible_inventory(host, inventory)
+                    inventory = self.ansible_group(host, srv.get("organization_name"), inventory)
+                    rolesmapping = self.config.get(v, "roles_mapping").replace(" ", "").split(",")
+                    for roles in rolesmapping:
+                        if roles not in srv:
+                            varmapping = self.find_str_dict(roles, srv)
+                            for metavars in varmapping:
+                                inventory = self.ansible_metavars(host, inventory, metavars)
+                        else:
+                            inventory = self.ansible_metavars(host, inventory, srv.get("roles"))
+        print(json.dumps(inventory, indent=2))
+
+### Revoir def find_str_dict
 
 if __name__ == '__main__':
-    ItopInventory("config.ini").run()
+    ItopInventory("config.ini").AnsibleInventory()
