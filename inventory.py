@@ -21,7 +21,6 @@ class ItopInventory(object):
         self.api_pass = self.config.get("itop", "passwd")
 
     def send_request(self, reqclass, def_class, sslverify=False):
-        group_filter = self.config.get(reqclass, "group_filter").split(",")
         filter = self.config.get(reqclass, "filter")
         req = "{\"operation\":\"core/get\",\"" + def_class[0] + "\":\"" + def_class[1] + "\",\"key\":\"SELECT " + \
               def_class[1] + "\",\"output_fields\":\"*\"}"
@@ -54,13 +53,14 @@ class ItopInventory(object):
             inventory["hosts"].append(host)
         return inventory
 
-    @staticmethod
-    def ansible_group(host, group, inventory):
-        if group not in inventory:
-            inventory[group] = []
-            inventory[group].append(host)
-        else:
-            inventory[group].append(host)
+    def ansible_group(self, host, inventory, itop_class, srv):
+        group_filter = self.config.get(itop_class, "group_filter").replace(" ", "").split(",")
+        for group in group_filter:
+            if group not in inventory:
+                inventory[srv.get(group)] = []
+                inventory[srv.get(group)].append(host)
+            else:
+                inventory[srv.get(group)].append(host)
         return inventory
 
     @staticmethod
@@ -75,7 +75,8 @@ class ItopInventory(object):
     @staticmethod
     def if_str_in_data(str, data):
         if str in data:
-            return data[str]
+            if data[str]:
+                return data[str]
 
     def find_str_dict(self, fstr, data):
         find_list = []
@@ -85,6 +86,7 @@ class ItopInventory(object):
                     find_list.append(self.if_str_in_data(fstr, i))
                     if isinstance(i, dict):
                         self.find_str_dict(fstr, i)
+
         return find_list
 
     @staticmethod
@@ -99,24 +101,27 @@ class ItopInventory(object):
     def ansible_inventory(self):
         inventory = None
         pattern = re.compile("^class::[a-zA-Z]{1,}$")
-        for v in self.get_itop_classes():
-            if pattern.match(v):
-                config_class = v.split('::')
-                http_return = self.send_request(v, config_class)
+        for itop_class in self.get_itop_classes():
+            if pattern.match(itop_class):
+                config_class = itop_class.split('::')
+                http_return = self.send_request(itop_class, config_class)
                 data_elem = self.search_itop_elem(http_return)
                 for srv in data_elem:
                     host = srv.get("name").replace(" ", "_")
                     inventory = self.ansible_add_inventory(host, inventory)
-                    inventory = self.ansible_group(host, srv.get("organization_name"), inventory)
-                    roles_mapping = self.config.get(v, "roles_mapping").replace(" ", "").split(",")
+                    inventory = self.ansible_group(host, inventory, itop_class, srv)
+                    roles_mapping = self.config.get(itop_class, "roles_mapping").replace(" ", "").split(",")
                     for roles in roles_mapping:
                         if roles not in srv:
                             list_mapping = self.find_str_dict(roles, srv)
                             for meta_vars in list_mapping:
-                                inventory = self.ansible_meta_vars(host, inventory, meta_vars)
+                                if meta_vars is not None:
+                                    inventory = self.ansible_meta_vars(host, inventory, meta_vars)
                         else:
-                            inventory = self.ansible_meta_vars(host, inventory, srv.get("roles"))
-        print(json.dumps(inventory, indent=2))
+                            if srv.get(roles):
+                                inventory = self.ansible_meta_vars(host, inventory, srv.get(roles))
+        return json.dumps(inventory, indent=2)
 
 if __name__ == '__main__':
-    ItopInventory("config.ini").ansible_inventory()
+    ansible_inventory = ItopInventory("config.ini").ansible_inventory()
+    print(ansible_inventory)
