@@ -37,8 +37,9 @@ class ItopInventory(object):
             itop_api_request = requests.post(self.url, auth=(self.user, self.api_pass), params=params, verify=False)
             response = itop_api_request.json()
             return response
-        except requests.exceptions.ConnectionError:
+        except json.JSONDecodeError:
             print("HTTP error unable to connect to Itop API")
+            exit(1)
 
     def get_itop_classes(self):
         itop_class = self.config.sections()
