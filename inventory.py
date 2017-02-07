@@ -74,10 +74,10 @@ class ItopInventory(object):
         return inventory
 
     @staticmethod
-    def if_str_in_data(str, data):
+    def if_str_in_data(check_str, data):
         if str in data:
-            if data[str]:
-                return data[str]
+            if data[check_str]:
+                return data[check_str]
 
     def find_str_dict(self, fstr, data):
         find_list = []
@@ -101,7 +101,7 @@ class ItopInventory(object):
 
     def ansible_inventory(self):
         inventory = None
-        pattern = re.compile("^class::[a-zA-Z]{1,}$")
+        pattern = re.compile("^class::[a-zA-Z]+$")
         for itop_class in self.get_itop_classes():
             if pattern.match(itop_class):
                 config_class = itop_class.split('::')
