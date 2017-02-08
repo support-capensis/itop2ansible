@@ -99,6 +99,18 @@ class ItopInventory(object):
                     elem.append(http_req[i][a]['fields'])
         return elem
 
+    def ansible_roles_mapping(self, roles_mapping, srv, host, inventory):
+        for roles in roles_mapping:
+            if roles not in srv:
+                list_mapping = self.find_str_dict(roles, srv)
+                for meta_vars in list_mapping:
+                    if meta_vars is not None:
+                        inventory = self.ansible_meta_vars(host, inventory, meta_vars)
+            else:
+                if srv.get(roles):
+                    inventory = self.ansible_meta_vars(host, inventory, srv.get(roles))
+        return inventory
+
     def ansible_inventory(self):
         inventory = None
         pattern = re.compile("^class::[a-zA-Z]+$")
@@ -112,15 +124,8 @@ class ItopInventory(object):
                     inventory = self.ansible_add_inventory(host, inventory)
                     inventory = self.ansible_group(host, inventory, itop_class, srv)
                     roles_mapping = self.config.get(itop_class, "roles_mapping").replace(" ", "").split(",")
-                    for roles in roles_mapping:
-                        if roles not in srv:
-                            list_mapping = self.find_str_dict(roles, srv)
-                            for meta_vars in list_mapping:
-                                if meta_vars is not None:
-                                    inventory = self.ansible_meta_vars(host, inventory, meta_vars)
-                        else:
-                            if srv.get(roles):
-                                inventory = self.ansible_meta_vars(host, inventory, srv.get(roles))
+                    inventory = self.ansible_roles_mapping(roles_mapping, srv, host, inventory)
+
         return json.dumps(inventory, indent=2)
 
 if __name__ == '__main__':
