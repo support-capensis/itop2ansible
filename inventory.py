@@ -101,7 +101,7 @@ class ItopInventory(object):
 
     def ansible_inventory(self):
         inventory = None
-        pattern = re.compile("^class::[a-zA-Z]{1,}$")
+        pattern = re.compile("^class::[a-zA-Z]+$")
         for itop_class in self.get_itop_classes():
             if pattern.match(itop_class):
                 config_class = itop_class.split('::')
