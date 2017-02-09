@@ -1,4 +1,4 @@
-#!/sur/bin/python3.4
+#!/usr/bin/python3.4
 # coding: utf8
 import configparser
 import json
