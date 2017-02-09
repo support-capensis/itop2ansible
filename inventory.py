@@ -83,7 +83,7 @@ class ItopInventory(object):
 
     @staticmethod
     def ansible_group_format(group_name):
-        pattern = re.compile("^[A-Za-z0-9\s]{1,}$")
+        pattern = re.compile("^[\w\s]{1,}$")
         if pattern.match(group_name):
             return group_name.replace(" ", "_")
         else:
