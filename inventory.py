@@ -81,6 +81,14 @@ class ItopInventory(object):
             inventory["hosts"].append(host)
         return inventory
 
+    def ansible_role_prefix(self,itop_class, meta_var):
+        role_prefix = self.config.get(itop_class, "role_prefix")
+        if role_prefix:
+            meta_var = role_prefix + "_" + meta_var
+            return meta_var
+        else:
+            return meta_var
+
     def ansible_group(self, host, inventory, itop_class, srv):
         """
         Add host to group from what's defined in the config file
@@ -141,7 +149,7 @@ class ItopInventory(object):
                     elem.append(http_req[i][a]['fields'])
         return elem
 
-    def ansible_roles_mapping(self, roles_mapping, srv, host, inventory):
+    def ansible_roles_mapping(self, roles_mapping, srv, host, inventory, itop_class):
         """
         Add roles by settings witch value to map as a role in itop data
         from config in role_mapping value
@@ -151,10 +159,10 @@ class ItopInventory(object):
                 list_mapping = self.find_elem_dict(roles, srv)
                 for meta_vars in list_mapping:
                     if meta_vars is not None:
-                        inventory = self.ansible_meta_vars(host, inventory, meta_vars)
+                        inventory = self.ansible_meta_vars(host, inventory, self.ansible_role_prefix(itop_class, meta_vars))
             else:
                 if srv.get(roles):
-                    inventory = self.ansible_meta_vars(host, inventory, srv.get(roles))
+                    inventory = self.ansible_meta_vars(host, inventory, self.ansible_role_prefix(itop_class, srv.get(roles)))
         return inventory
 
     def ansible_inventory(self, args):
@@ -176,7 +184,7 @@ class ItopInventory(object):
                     inventory = self.ansible_add_inventory(host, inventory)
                     inventory = self.ansible_group(host, inventory, itop_class, srv)
                     roles_mapping = self.config.get(itop_class, "roles_mapping").replace(" ", "").split(",")
-                    inventory = self.ansible_roles_mapping(roles_mapping, srv, host, inventory)
+                    inventory = self.ansible_roles_mapping(roles_mapping, srv, host, inventory, itop_class)
 
         return json.dumps(inventory, indent=args.indent)
 
