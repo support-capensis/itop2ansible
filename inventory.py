@@ -81,10 +81,10 @@ class ItopInventory(object):
             inventory["hosts"].append(host)
         return inventory
 
-    def ansible_role_prefix(self,itop_class, meta_var):
-        role_prefix = self.config.get(itop_class, "role_prefix")
-        if role_prefix:
-            meta_var = role_prefix + "_" + meta_var
+    def ansible_add_prefix(self,itop_class, meta_var, prefix):
+        add_prefix = self.config.get(itop_class, prefix)
+        if add_prefix:
+            meta_var = add_prefix + "_" + meta_var
             return meta_var
         else:
             return meta_var
@@ -106,13 +106,24 @@ class ItopInventory(object):
     @staticmethod
     def ansible_meta_vars(host, inventory, meta_vars):
         """
-        Add special var for a host in the _meta key of the inventory
+        Add boolean var for role mapping of host in the _meta key of the inventory
         """
         if host not in inventory["_meta"]["hostvars"]:
             inventory["_meta"]["hostvars"][host] = {}
             inventory["_meta"]["hostvars"][host][meta_vars] = "True"
         else:
             inventory["_meta"]["hostvars"][host][meta_vars] = "True"
+        return inventory
+
+    def ansible_add_vars(self, host, inventory, srv, srv_elem, itop_class):
+        """
+        Add special var for a host in the _meta key of the inventory
+        """
+        if host not in inventory["_meta"]["hostvars"] and srv.get(srv_elem):
+            inventory["_meta"]["hostvars"][host] = {}
+            inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(srv_elem)
+        elif srv.get(srv_elem) and srv.get(srv_elem) != "[]" and srv.get(srv_elem) != "":
+            inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(srv_elem)
         return inventory
 
     @staticmethod
@@ -159,10 +170,10 @@ class ItopInventory(object):
                 list_mapping = self.find_elem_dict(roles, srv)
                 for meta_vars in list_mapping:
                     if meta_vars is not None:
-                        inventory = self.ansible_meta_vars(host, inventory, self.ansible_role_prefix(itop_class, meta_vars))
+                        inventory = self.ansible_meta_vars(host, inventory, self.ansible_add_prefix(itop_class, meta_vars, "role_prefix"))
             else:
                 if srv.get(roles):
-                    inventory = self.ansible_meta_vars(host, inventory, self.ansible_role_prefix(itop_class, srv.get(roles)))
+                    inventory = self.ansible_meta_vars(host, inventory, self.ansible_add_prefix(itop_class, srv.get(roles), "role_prefix"))
         return inventory
 
     def ansible_inventory(self, args):
@@ -185,7 +196,8 @@ class ItopInventory(object):
                     inventory = self.ansible_group(host, inventory, itop_class, srv)
                     roles_mapping = self.config.get(itop_class, "roles_mapping").replace(" ", "").split(",")
                     inventory = self.ansible_roles_mapping(roles_mapping, srv, host, inventory, itop_class)
-
+                    for srv_elem in srv:
+                        inventory = self.ansible_add_vars(host, inventory, srv, srv_elem, itop_class)
         return json.dumps(inventory, indent=args.indent)
 
 if __name__ == '__main__':
