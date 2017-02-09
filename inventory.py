@@ -23,16 +23,16 @@ class ItopInventory(object):
     def itop_inventory(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '--output-indent', '-o', dest='indent', type=int
+            '--output-indent', dest='indent', type=int
         )
         parser.add_argument(
-            '--inventory', '-i', dest='ansible', type=str
+            '--inventory', '-i', dest='inventory', type=str
         )
         parser.add_argument(
-            '--show-api-output',dest='http_output', action='store_true'
+            '--show-api-output', dest='http_output', action='store_true'
         )
         parsed_args = parser.parse_args()
-        if parsed_args.ansible is None:
+        if parsed_args.inventory is None:
             return self.ansible_inventory(parsed_args)
 
     def send_request(self, reqclass, def_class, sslverify=False):
