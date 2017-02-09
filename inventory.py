@@ -105,7 +105,10 @@ class ItopInventory(object):
 
     @staticmethod
     def ansible_add_group(inventory, group, host):
-        new_group = group.replace(" ", "_")
+        if group is None:
+            return inventory
+        else:
+            new_group = group.replace(" ", "_")
         if group not in inventory:
             inventory[new_group] = []
             inventory[new_group].append(host)
