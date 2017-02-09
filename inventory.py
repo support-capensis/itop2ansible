@@ -81,17 +81,25 @@ class ItopInventory(object):
             inventory["hosts"].append(host)
         return inventory
 
+    def ansible_group_format(self, group_name):
+        pattern = re.compile("^[A-Za-z0-9\s]{1,}$")
+        if pattern.match(group_name):
+            return group_name.replace(" ", "_")
+        else:
+            return group_name
+
     def ansible_group(self, host, inventory, itop_class, srv):
         """
         Add host to group from what's defined in the config file
         """
-        group_filter = self.config.get(itop_class, "group_filter").replace(" ", "_").split(",")
+        group_filter = self.config.get(itop_class, "group_filter").replace(" ", "").split(",")
         for group in group_filter:
             if group not in inventory:
-                inventory[srv.get(group)] = []
-                inventory[srv.get(group)].append(host)
+                group_name = self.ansible_group_format(srv.get(group))
+                inventory[group_name] = []
+                inventory[group_name].append(host)
             else:
-                inventory[srv.get(group)].append(host)
+                inventory[group_name].append(host)
         return inventory
 
     @staticmethod
