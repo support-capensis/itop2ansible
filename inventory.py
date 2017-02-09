@@ -95,12 +95,22 @@ class ItopInventory(object):
         """
         group_filter = self.config.get(itop_class, "group_filter").replace(" ", "").split(",")
         for group in group_filter:
-            if group not in inventory:
-                group_name = srv.get(group).replace(" ", "_")
-                inventory[group_name] = []
-                inventory[group_name].append(host)
-            else:
-                inventory[group_name].append(host)
+            special_group = self.find_elem_dict(group, srv)
+            if srv.get(group):
+                inventory = self.ansible_add_group(inventory, srv.get(group), host)
+            elif special_group:
+                for new_group in special_group:
+                    inventory = self.ansible_add_group(inventory, new_group, host)
+        return inventory
+
+    @staticmethod
+    def ansible_add_group(inventory, group, host):
+        new_group = group.replace(" ", "_")
+        if group not in inventory:
+            inventory[new_group] = []
+            inventory[new_group].append(host)
+        else:
+            inventory[new_group].append(host)
         return inventory
 
     @staticmethod
@@ -141,11 +151,13 @@ class ItopInventory(object):
         """
         find_list = []
         for key in data:
+            #print(key, "here", type(data[key]))
             if isinstance(data[key], list):
                 for elem in data[key]:
                     find_list.append(self.check_exist(search_elem, elem))
                     if isinstance(elem, dict):
                         self.check_exist(search_elem, elem)
+        #print(find_list, "finaly")
         return find_list
 
     @staticmethod
