@@ -34,6 +34,10 @@ class ItopInventory(object):
             '--show-api-output', dest='http_output', action='store_true',
             help='for debugging purpose show output of api'
         )
+        parser.add_argument(
+            '--list', dest='ansible_list', action='store_true',
+            help='list ansible'
+        )
         parsed_args = parser.parse_args()
         if parsed_args.inventory is None:
             return self.ansible_inventory(parsed_args)
