@@ -23,13 +23,16 @@ class ItopInventory(object):
     def itop_inventory(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '--output-indent', dest='indent', type=int
+            '--output-indent', dest='indent', type=int,
+            help='Set number of space to indent output'
         )
         parser.add_argument(
-            '--inventory', '-i', dest='inventory', type=str
+            '--inventory', '-i', dest='inventory', type=str,
+            help='default ansible, set output type inventory (icinga2, rundeck)'
         )
         parser.add_argument(
-            '--show-api-output', dest='http_output', action='store_true'
+            '--show-api-output', dest='http_output', action='store_true',
+            help='for debugging purpose show output of api'
         )
         parsed_args = parser.parse_args()
         if parsed_args.inventory is None:
@@ -82,7 +85,7 @@ class ItopInventory(object):
         """
         Add host to group from what's defined in the config file
         """
-        group_filter = self.config.get(itop_class, "group_filter").replace(" ", "").split(",")
+        group_filter = self.config.get(itop_class, "group_filter").replace(" ", "_").split(",")
         for group in group_filter:
             if group not in inventory:
                 inventory[srv.get(group)] = []
