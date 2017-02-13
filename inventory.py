@@ -79,10 +79,11 @@ class ItopInventory(object):
         Create and add host to a simple ansible inventory
         """
         if inventory is None:
-            inventory = {"hosts": [], "vars": {}, "_meta": {"hostvars": {}}}
-            inventory["hosts"].append(host)
-        else:
-            inventory["hosts"].append(host)
+            inventory = {"_meta":
+                            {
+                             "hostvars": {},
+                            }
+                        }
         return inventory
 
     def ansible_add_prefix(self,itop_class, meta_var, prefix):
@@ -114,10 +115,13 @@ class ItopInventory(object):
         else:
             new_group = group.replace(" ", "_")
         if group not in inventory:
-            inventory[new_group] = []
-            inventory[new_group].append(host)
+            inventory[new_group] = {
+                                    "hosts": [],
+                                    "vars": {},
+                                    }
+            inventory[new_group]["hosts"].append(host)
         else:
-            inventory[new_group].append(host)
+            inventory[new_group]["hosts"].append(host)
         return inventory
 
     @staticmethod
