@@ -6,6 +6,7 @@ import re
 import requests
 import argparse
 
+
 class ItopInventory(object):
     def __init__(self, configfile):
         config = configparser.ConfigParser()
@@ -80,13 +81,13 @@ class ItopInventory(object):
         """
         if inventory is None:
             inventory = {"_meta":
-                            {
-                             "hostvars": {},
-                            }
-                        }
+                {
+                    "hostvars": {},
+                }
+            }
         return inventory
 
-    def ansible_add_prefix(self,itop_class, meta_var, prefix):
+    def ansible_add_prefix(self, itop_class, meta_var, prefix):
         add_prefix = self.config.get(itop_class, prefix)
         if add_prefix:
             meta_var = add_prefix + "_" + meta_var
@@ -116,9 +117,9 @@ class ItopInventory(object):
             new_group = group.replace(" ", "_")
         if group not in inventory:
             inventory[new_group] = {
-                                    "hosts": [],
-                                    "vars": {},
-                                    }
+                "hosts": [],
+                "vars": {},
+            }
             inventory[new_group]["hosts"].append(host)
         else:
             inventory[new_group]["hosts"].append(host)
@@ -142,9 +143,11 @@ class ItopInventory(object):
         """
         if host not in inventory["_meta"]["hostvars"]:
             inventory["_meta"]["hostvars"][host] = {}
-            inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(srv_elem)
+            inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(
+                srv_elem)
         else:
-            inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(srv_elem)
+            inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(
+                srv_elem)
         return inventory
 
     @staticmethod
@@ -191,10 +194,14 @@ class ItopInventory(object):
                 list_mapping = self.find_elem_dict(roles, srv)
                 for meta_vars in list_mapping:
                     if meta_vars is not None:
-                        inventory = self.ansible_meta_vars(host, inventory, self.ansible_add_prefix(itop_class, meta_vars, "role_prefix"))
+                        inventory = self.ansible_meta_vars(host, inventory,
+                                                           self.ansible_add_prefix(itop_class, meta_vars,
+                                                                                   "role_prefix"))
             else:
                 if srv.get(roles):
-                    inventory = self.ansible_meta_vars(host, inventory, self.ansible_add_prefix(itop_class, srv.get(roles), "role_prefix"))
+                    inventory = self.ansible_meta_vars(host, inventory,
+                                                       self.ansible_add_prefix(itop_class, srv.get(roles),
+                                                                               "role_prefix"))
         return inventory
 
     def ansible_inventory(self, args):
@@ -220,6 +227,7 @@ class ItopInventory(object):
                     for srv_elem in srv:
                         inventory = self.ansible_add_vars(host, inventory, srv, srv_elem, itop_class)
         return json.dumps(inventory, indent=args.indent)
+
 
 if __name__ == '__main__':
     ansible_inventory = ItopInventory("config.ini").itop_inventory()
