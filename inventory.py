@@ -140,10 +140,10 @@ class ItopInventory(object):
         """
         Add special var for a host in the _meta key of the inventory
         """
-        if host not in inventory["_meta"]["hostvars"] and srv.get(srv_elem):
+        if host not in inventory["_meta"]["hostvars"]:
             inventory["_meta"]["hostvars"][host] = {}
             inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(srv_elem)
-        elif srv.get(srv_elem) and srv.get(srv_elem) != "[]" and srv.get(srv_elem) != "":
+        else:
             inventory["_meta"]["hostvars"][host][self.ansible_add_prefix(itop_class, srv_elem, "prefix")] = srv.get(srv_elem)
         return inventory
 
