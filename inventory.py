@@ -162,13 +162,11 @@ class ItopInventory(object):
         """
         find_list = []
         for key in data:
-            #print(key, "here", type(data[key]))
             if isinstance(data[key], list):
                 for elem in data[key]:
                     find_list.append(self.check_exist(search_elem, elem))
                     if isinstance(elem, dict):
                         self.check_exist(search_elem, elem)
-        #print(find_list, "finaly")
         return find_list
 
     @staticmethod
