@@ -3,7 +3,7 @@
 ## Purpose
 
 
-Itop2ansible is made to convert itop cmdb entry to an ansible inventory
+Itop2inventory is made to convert itop cmdb entry to an ansible/icinga/rundeck inventory
 
 ## Requierement
 
