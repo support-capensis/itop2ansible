@@ -1,4 +1,4 @@
-# Itop2ansible
+# Itop2inventory
 
 ## Purpose
 
