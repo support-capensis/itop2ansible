@@ -63,6 +63,58 @@ If user as no right in itop that's the return the script give:
 }
 ```
 
+## Itop output 
+```
+"Server::39": {
+            "fields": {
+                "organization_name": "CAPENSIS",
+                "name": "debian666",
+                "applicationsolution_list": [
+                    {
+                        "friendlyname": "42 39",
+                        "applicationsolution_name": "icinga2client",
+                        "applicationsolution_id_friendlyname": "icinga2client",
+                        "applicationsolution_id": "42"
+                    }
+                ]
+            },
+            "key": "39",
+            "code": 0,
+            "class": "Server",
+            "message": ""
+        },
+```
+
+## Ansible output
+
+```
+    "_meta": {
+        "hostvars": {
+            "Server3": {
+                    "itop_organization_name": "Demo",
+                    "role_itop": "True",
+                    "itop_name": "Server3",
+                    "role_icinga2-client": "True",
+                    "itop_applicationsolution_list": [
+                        {
+                            "applicationsolution_id_friendlyname": "itop",
+                            "friendlyname": "13 3",
+                            "applicationsolution_id": "13",
+                            "applicationsolution_name": "itop"
+                        },
+                        {
+                            "applicationsolution_id_friendlyname": "icinga2-client",
+                            "friendlyname": "36 3",
+                            "applicationsolution_id": "36",
+                            "applicationsolution_name": "icinga2-client"
+                        }
+                    ]
+                },
+            }
+        }
+    }
+```
+
 ## Command line option
 
 ```
