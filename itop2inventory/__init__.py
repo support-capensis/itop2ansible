@@ -8,11 +8,11 @@ import argparse
 
 
 class ItopInventory(object):
-    def __init__(self, configfile):
+    def __init__(self):
         config = configparser.ConfigParser()
         self.config = config
         try:
-            with open(configfile) as f:
+            with open("/etc/itop2inventory/config.ini") as f:
                 config.read_file(f)
         except IOError:
             print("No config.ini file found")
@@ -247,5 +247,5 @@ class ItopInventory(object):
         return json.dumps(inventory, indent=args.indent)
 
     def __call__(self, *args, **kwargs):
-        ansible_inventory = ItopInventory("config.ini").itop_inventory()
-        print(ansible_inventory)
+        ansible_inventory = self.itop_inventory()
+        return ansible_inventory
