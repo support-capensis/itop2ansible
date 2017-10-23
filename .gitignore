@@ -1,3 +1,4 @@
 .idea/
 ../../PycharmProjects/maat2inventory/config.ini
-test.json
+config.ini
+itop2inventory.egg-info

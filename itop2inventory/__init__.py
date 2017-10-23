@@ -246,7 +246,6 @@ class ItopInventory(object):
                         inventory = self.make_inventory(host, itop_class, srv, inventory)
         return json.dumps(inventory, indent=args.indent)
 
-
-if __name__ == '__main__':
-    ansible_inventory = ItopInventory("config.ini").itop_inventory()
-    print(ansible_inventory)
+    def __call__(self, *args, **kwargs):
+        ansible_inventory = ItopInventory("config.ini").itop_inventory()
+        print(ansible_inventory)
