@@ -1,4 +1,4 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3
 # coding: utf8
 import configparser
 import json
@@ -24,7 +24,7 @@ class ItopInventory(object):
     def itop_inventory(self):
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '--output-indent', dest='indent', type=int,
+            '--output-indent', dest='indent', type=int, default=4,
             help='Set number of space to indent output'
         )
         parser.add_argument(
@@ -75,13 +75,13 @@ class ItopInventory(object):
         return itop_class
 
     @staticmethod
-    def ansible_add_inventory(host, inventory):
+    def ansible_add_inventory(inventory):
         """
         Create and add host to a simple ansible inventory
         """
         if inventory is None:
-            inventory = {"_meta":
-                {
+            inventory = {
+                "_meta": {
                     "hostvars": {},
                 }
             }
@@ -114,15 +114,16 @@ class ItopInventory(object):
         if group is None:
             return inventory
         else:
-            new_group = group.replace(" ", "_")
+            group = group.replace(" ", "_")
+
         if group not in inventory:
-            inventory[new_group] = {
+            inventory[group] = {
                 "hosts": [],
                 "vars": {},
             }
-            inventory[new_group]["hosts"].append(host)
+            inventory[group]["hosts"].append(host)
         else:
-            inventory[new_group]["hosts"].append(host)
+            inventory[group]["hosts"].append(host)
         return inventory
 
     @staticmethod
@@ -132,9 +133,9 @@ class ItopInventory(object):
         """
         if host not in inventory["_meta"]["hostvars"]:
             inventory["_meta"]["hostvars"][host] = {}
-            inventory["_meta"]["hostvars"][host][meta_vars] = "True"
+            inventory["_meta"]["hostvars"][host][meta_vars] = True
         else:
-            inventory["_meta"]["hostvars"][host][meta_vars] = "True"
+            inventory["_meta"]["hostvars"][host][meta_vars] = True
         return inventory
 
     def ansible_add_vars(self, host, inventory, srv, srv_elem, itop_class):
@@ -204,6 +205,23 @@ class ItopInventory(object):
                                                                                "role_prefix"))
         return inventory
 
+    def get_name (self, itop_class, srv):
+        name_mapping = self.config.get(itop_class, "name",)
+        try:
+            host = srv.get(name_mapping).replace(" ", "_")
+        except AttributeError:
+            host = self.find_elem_dict(name_mapping, srv)
+        return host
+
+    def make_inventory(self, host, itop_class, srv, inventory):
+        inventory = self.ansible_add_inventory(inventory)
+        inventory = self.ansible_group(host, inventory, itop_class, srv)
+        roles_mapping = self.config.get(itop_class, "roles_mapping").replace(" ", "").split(",")
+        inventory = self.ansible_roles_mapping(roles_mapping, srv, host, inventory, itop_class)
+        for srv_elem in srv:
+            inventory = self.ansible_add_vars(host, inventory, srv, srv_elem, itop_class)
+        return inventory
+
     def ansible_inventory(self, args):
         """
         Set complete inventory
@@ -219,13 +237,13 @@ class ItopInventory(object):
                     exit(1)
                 data_elem = self.search_itop_srv(http_return)
                 for srv in data_elem:
-                    host = srv.get("name").replace(" ", "_")
-                    inventory = self.ansible_add_inventory(host, inventory)
-                    inventory = self.ansible_group(host, inventory, itop_class, srv)
-                    roles_mapping = self.config.get(itop_class, "roles_mapping").replace(" ", "").split(",")
-                    inventory = self.ansible_roles_mapping(roles_mapping, srv, host, inventory, itop_class)
-                    for srv_elem in srv:
-                        inventory = self.ansible_add_vars(host, inventory, srv, srv_elem, itop_class)
+                    hosts = self.get_name(itop_class, srv)
+                    if type(hosts) == list:
+                        for host in hosts:
+                            inventory = self.make_inventory(host, itop_class, srv, inventory)
+                    else:
+                        host = hosts
+                        inventory = self.make_inventory(host, itop_class, srv, inventory)
         return json.dumps(inventory, indent=args.indent)
 
 
