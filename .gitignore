@@ -1,5 +1,5 @@
 .idea/
 ../../PycharmProjects/maat2inventory/config.ini
-config.ini
+config-dev.ini
 itop2inventory.egg-info
 dist
