@@ -3,7 +3,10 @@
 ## Purpose
 
 
-Itop2inventory is made to convert itop cmdb entry to an ansible/icinga/rundeck inventory
+Itop2inventory is made to convert itop cmdb entry to an ansible inventory
+
+It will convert itop class information to hostvars elements
+
 
 ## Requierement
 
@@ -16,6 +19,12 @@ Itop2inventory is made to convert itop cmdb entry to an ansible/icinga/rundeck i
  - invoke inventory
 
 ## Config.ini
+
+
+Main section [ITOP] is used to define url, credentials and api version of ITOP
+Sub section [class::FOO] is used to make vars from
+
+
 
 ```
 [itop]
@@ -130,10 +139,12 @@ optional arguments:
   --list                list ansible
 ```
 
-## Todo
+## Debug output
 
-incorporate icinga2 and rundeck host
+```
+server:/# itop-inventory --show-api-output
 
+```
 ## Environement
 
 python 3.4
