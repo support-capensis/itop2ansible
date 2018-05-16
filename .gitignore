@@ -3,3 +3,4 @@
 config-dev.ini
 itop2inventory.egg-info
 dist
+.vscode/
