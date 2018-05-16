@@ -25,7 +25,7 @@ class ItopInventory(object):
         parser = argparse.ArgumentParser()
         parser.add_argument(
             '--output-indent', dest='indent', type=int,
-            help='Set number of space to indent output'
+            help='Set number of space to indent output (type int)'
         )
         parser.add_argument(
             '--inventory', '-i', dest='inventory', type=str,
@@ -230,5 +230,5 @@ class ItopInventory(object):
 
 
 if __name__ == '__main__':
-    ansible_inventory = ItopInventory("config.ini").itop_inventory()
+    ansible_inventory = ItopInventory("config-dev.ini").itop_inventory()
     print(ansible_inventory)

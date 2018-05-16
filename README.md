@@ -95,9 +95,32 @@ If user as no right in itop that's the return the script give:
 
 ```
 
-## Ansible output
+## Ansible
 
+### Config inventory in Ansible
+
+```bash
+~# vi <ansible_config_dir>/ansible.cfg
 ```
+
+```ini
+[defaults]
+inventory = ./inventory
+```
+
+### Test Ansible inventory
+
+```bash
+~# ansible -m ping <host_to_test>
+```
+
+### Output for Ansile inventory
+
+```bash
+~# ./inventory --output-indent 4
+```
+
+```json
     "_meta": {
         "hostvars": {
             "Server3": {
@@ -141,10 +164,10 @@ optional arguments:
 
 ## Debug output
 
+```bash
+~# itop-inventory --show-api-output
 ```
-server:/# itop-inventory --show-api-output
 
-```
 ## Environement
 
 python 3.4
